@@ -1,0 +1,29 @@
+# General ignores
+*.log
+*.swp
+.DS_Store
+.env                  # Sensitive miljøvariabler (passord, API-nøkler)
+temp/
+
+# Docker ignores
+# bygger fra konteks, så .dockerignore er nok.
+
+# Python specific ignores
+__pycache__/
+*.pyc
+.pytest_cache/
+venv/                 # Python virtuelle miljøer
+
+# Node.js specific ignores (hvis du har Node.js apper)
+node_modules/
+
+# Kubernetes specific ignores
+kubeconfig            # K8s konfigurasjonsfiler kan inneholde sensitiv info/tokener
+# Hvis du bruker Helm, kan du ignorere genererte filer
+# charts/*.tgz
+
+# Terraform specific ignores (hvis du bruker IaC med Terraform)
+.terraform/
+terraform.tfstate
+terraform.tfstate.backup
+*.tfplan
