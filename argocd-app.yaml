@@ -1,0 +1,21 @@
+# my-devops-project/argocd-app.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: my-database-apps # Navnet på Argo CD applikasjonen (velg et beskrivende navn)
+  namespace: argocd     # Argo CD applikasjoner kjører i argocd namespace
+spec:
+  project: default      # Standard Argo CD prosjekt
+  source:
+    repoURL: https://github.com/OddAir/my-devops-project.git # <--- VIKTIG: ERSTATT DENNE MED DIN EGEN REPO URL (OddAir/my-devops-project)!
+    targetRevision: HEAD # Hvilken gren eller commit Argo CD skal følge (HEAD = siste commit på grenen, som oftest 'main')
+    path: kubernetes     # Mappen inne i ditt Git-repo som inneholder K8s YAML-filene
+  destination:
+    server: https://kubernetes.default.svc # Cluster URL (in-cluster Minikube)
+    namespace: default                   # Namespace hvor applikasjonene skal deployes i K8s
+  syncPolicy:
+    automated:
+      prune: true     # Sletter ressurser i klyngen som ikke lenger finnes i Git (anbefalt for GitOps)
+      selfHeal: true  # Synkroniserer klyngen automatisk hvis den avviker fra Git-tilstanden (anbefalt for GitOps)
+    syncOptions:
+      - CreateNamespace=true # Lager målnamespacet om det ikke finnes (hvis du bruker et annet enn 'default')
