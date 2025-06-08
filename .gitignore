@@ -27,3 +27,5 @@ kubeconfig            # K8s konfigurasjonsfiler kan inneholde sensitiv info/toke
 terraform.tfstate
 terraform.tfstate.backup
 *.tfplan
+# Kubernetes binaries
+kubectl

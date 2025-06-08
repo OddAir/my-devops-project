@@ -1,0 +1,77 @@
+# my-devops-project/kubernetes/influxdb.yaml
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: influxdb-pvc
+  namespace: default # Anbefalt å spesifisere namespace
+spec:
+  accessModes:
+    - ReadWriteOnce # Dette betyr at volumet kan monteres av en enkelt node i les/skriv modus
+  resources:
+    requests:
+      storage: 5Gi # Be om 5 GB lagringsplass. Juster etter behov.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: influxdb-deployment
+  namespace: default
+  labels:
+    app: influxdb
+spec:
+  replicas: 1 # Vi starter med én instans
+  selector:
+    matchLabels:
+      app: influxdb
+  template:
+    metadata:
+      labels:
+        app: influxdb
+    spec:
+      containers:
+      - name: influxdb
+        image: influxdb:latest # Bruker det offisielle InfluxDB bildet fra Docker Hub
+        ports:
+        - containerPort: 8086
+          name: http # Navn på port for bedre lesbarhet
+        volumeMounts:
+        - name: influxdb-storage
+          mountPath: /var/lib/influxdb # Standard datamappe for InfluxDB inne i containeren
+        env: # Miljøvariabler for InfluxDB 2.x setup, hvis ikke setup er kjørt manuelt
+          - name: DOCKER_INFLUXDB_INIT_MODE
+            value: setup
+          - name: DOCKER_INFLUXDB_INIT_USERNAME
+            value: odd
+          - name: DOCKER_INFLUXDB_INIT_PASSWORD
+            value: supersecretpassword # ERSTATT i produksjon med Secret!
+          - name: DOCKER_INFLUXDB_INIT_ORG
+            value: hjemme
+          - name: DOCKER_INFLUXDB_INIT_BUCKET
+            value: app
+          - name: DOCKER_INFLUXDB_INIT_ADMIN_TOKEN # VIKTIG: Dette genererer admin token!
+            value: Y_fybpJ7Af-UEN_kIZ1bKUUncJlZeiJ8TdAWnyps0M2Vzam39-mU6hdP7vcQRp2Yh8RIjXc7bAXMMqLn-z-O9A== # ERSTATT med DIN token fra tidligere!
+      volumes:
+      - name: influxdb-storage
+        persistentVolumeClaim:
+          claimName: influxdb-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: influxdb-service
+  namespace: default
+spec:
+  selector:
+    app: influxdb # Matcher labelen på InfluxDB Pods for å dirigere trafikk
+  ports:
+    - protocol: TCP
+      port: 8086 # Porten på servicen (tilgjengelig for andre apper i klyngen)
+      targetPort: http # Refererer til den navngitte porten i containeren (8086)
+  type: ClusterIP # Standard type, kun tilgjengelig innenfor klyngen
+
+  # FOR TESTING (IKKE I PRODUKSJON): Hvis du vil eksponere InfluxDB utenfor klyngen for enkel testing,
+  # kan du midlertidig endre 'type' til NodePort. Du får da tilgang via Minikube-nodens IP på en dynamisk port (typisk 3xxxx)
+  # eller en spesifikk port du velger mellom 30000-32767.
+  # type: NodePort
+  # nodePort: 30086 # Eksponerer på denne porten på noden
