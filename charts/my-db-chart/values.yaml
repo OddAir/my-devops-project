@@ -1,0 +1,25 @@
+# charts/my-db-chart/values.yaml
+
+influxdb:
+  enabled: true # Kontroller om InfluxDB skal deployes
+  image:
+    repository: influxdb
+    tag: latest # Kan overstyres til f.eks. 2.7
+  persistence:
+    size: 5Gi # Lagringsstørrelse for PVC
+
+postgresql:
+  enabled: true # Kontroller om PostgreSQL skal deployes
+  image:
+    repository: postgres
+    tag: latest # Kan overstyres til f.eks. 17
+  persistence:
+    size: 5Gi # Lagringsstørrelse for PVC
+  auth:
+    # Passord og bruker, referert fra Kubernetes Secrets
+    # Merk: Helm håndterer IKKE opprettelse av secrets som standard,
+    # kun referanser. Secrets må opprettes separat (som vi gjorde i Del 10).
+    usernameKey: POSTGRES_USER
+    passwordKey: POSTGRES_PASSWORD
+    databaseKey: POSTGRES_DB
+    secretName: postgres-secrets # Navnet på Secretet vi opprettet i K8s

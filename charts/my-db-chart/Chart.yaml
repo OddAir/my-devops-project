@@ -1,0 +1,6 @@
+apiVersion: v2
+name: my-db-chart
+description: A Helm chart for deploying InfluxDB and PostgreSQL
+type: application
+version: 0.1.0 # Startversjon for ditt Chart
+appVersion: "1.0.0" # Applikasjonsversjon (ikke kritisk for databaser her, kan beholdes)

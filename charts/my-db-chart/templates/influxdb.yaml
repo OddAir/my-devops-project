@@ -1,0 +1,81 @@
+{{- if .Values.influxdb.enabled -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: influxdb-pvc
+  namespace: {{ .Release.Namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.influxdb.persistence.size }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: influxdb-deployment
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: influxdb
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: influxdb
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: influxdb
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: influxdb
+        image: "{{ .Values.influxdb.image.repository }}:{{ .Values.influxdb.image.tag }}"
+        ports:
+        - containerPort: 8086
+          name: http
+        volumeMounts:
+        - name: influxdb-storage
+          mountPath: /var/lib/influxdb
+        env:
+          - name: DOCKER_INFLUXDB_INIT_MODE
+            value: setup
+          - name: DOCKER_INFLUXDB_INIT_USERNAME
+            value: odd
+          - name: DOCKER_INFLUXDB_INIT_PASSWORD
+            value: supersecretpassword # Dette er fortsatt en hardkodet verdi for nå, men egentlig burde vært i et Secret.
+          - name: DOCKER_INFLUXDB_INIT_ORG
+            value: hjemme
+          - name: DOCKER_INFLUXDB_INIT_BUCKET
+            value: app
+          - name: DOCKER_INFLUXDB_INIT_ADMIN_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: influxdb-secrets
+                key: INFLUXDB_INIT_ADMIN_TOKEN
+        volumes:
+        - name: influxdb-storage
+          persistentVolumeClaim:
+            claimName: influxdb-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: influxdb-service
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: influxdb
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  selector:
+    app: influxdb
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  ports:
+    - protocol: TCP
+      port: 8086
+      targetPort: http
+  type: ClusterIP
+{{- end -}}
